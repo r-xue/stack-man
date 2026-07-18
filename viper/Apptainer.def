@@ -12,7 +12,7 @@ Stage: build
 
 %post
     export DEBIAN_FRONTEND=noninteractive
-    apt-get update && apt-get install -y curl ca-certificates
+    apt-get update && apt-get install -y curl ca-certificates build-essential
     
     # Install Pixi globally inside the build container
     curl -fsSL https://pixi.sh/install.sh | bash
