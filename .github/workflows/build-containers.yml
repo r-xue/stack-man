@@ -2,12 +2,18 @@ name: Build and Release Containers
 
 on:
   push:
+    branches:
+      - main
     tags:
       - 'v*' # Automatically trigger when you push a version tag (e.g., git tag v1.0 && git push origin v1.0)
+  pull_request:
+    branches:
+      - main
   workflow_dispatch: # Allows you to manually trigger the workflow from the Actions tab on GitHub
 
 permissions:
   contents: write # Required to upload the artifacts to GitHub Releases
+  packages: write # Required to push Docker images to GitHub Container Registry (GHCR)
 
 jobs:
   build-and-release:
@@ -52,9 +58,77 @@ jobs:
 
       # 4. Official GitHub CLI for Releases (No third-party action)
       - name: Upload to GitHub Release
-        if: startsWith(github.ref, 'refs/tags/')
+        if: startsWith(github.ref, 'refs/tags/v')
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Use the pre-installed official GitHub CLI to create a release and attach the files
           gh release create ${{ github.ref_name }} release-artifacts/*.sif --title "Release ${{ github.ref_name }}" --generate-notes
+
+  build-and-push-docker:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Free Disk Space (Native)
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf "/usr/local/share/boost"
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Build and push CASA
+      - name: Docker meta for CASA
+        id: meta_casa
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}/casa
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+
+      - name: Build and push CASA Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./casa
+          file: ./casa/Dockerfile
+          push: ${{ startsWith(github.ref, 'refs/tags/v') }}
+          tags: ${{ steps.meta_casa.outputs.tags }}
+          labels: ${{ steps.meta_casa.outputs.labels }}
+          build-args: |
+            PIXI_ENV=default
+
+      # Build and push Viper
+      - name: Docker meta for Viper
+        id: meta_viper
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}/viper
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+
+      - name: Build and push Viper Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./viper
+          file: ./viper/Dockerfile
+          push: ${{ startsWith(github.ref, 'refs/tags/v') }}
+          tags: ${{ steps.meta_viper.outputs.tags }}
+          labels: ${{ steps.meta_viper.outputs.labels }}
+          build-args: |
+            PIXI_ENV=default
