@@ -2,7 +2,7 @@
 name = "casa"
 version = "0.1.0"
 description = "Casa environment stack with multi-version variants"
-authors = ["Author"]
+authors = ["Rui Xue <rx.astro@gmail.com>"]
 channels = ["conda-forge"]
 platforms = ["linux-64", { platform = "osx-arm64", macos = "15.0" }]
 

@@ -1,0 +1,17 @@
+[workspace]
+name = "viper"
+version = "0.1.0"
+description = "Viper environment stack"
+authors = ["Rui Xue <rx.astro@gmail.com>"]
+channels = ["conda-forge"]
+platforms = ["linux-64", "osx-arm64"]
+
+[dependencies]
+python = ">=3.12"
+pip = "*"
+ipython = "*"
+conda-ecosystem-user-package-isolation = "*"
+
+[pypi-dependencies]
+xradio = "*"
+astroviper = "*"

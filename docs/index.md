@@ -12,4 +12,4 @@ Welcome to the `stack-man` repository! This project provides reproducible, conta
 ## Available Stacks
 
 * [CASA Environment Stack](casa_stack.md)
-* Viper Stack (WIP)
+* [Viper Environment Stack](viper_stack.md)

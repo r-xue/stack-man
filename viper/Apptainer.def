@@ -1,0 +1,31 @@
+Bootstrap: docker
+From: ubuntu:22.04
+
+%files
+    # Copy your local Pixi files into the container build context
+    pixi.toml /opt/viper/pixi.toml
+    # Note: Requires pixi.lock to be generated locally before building
+    pixi.lock /opt/viper/pixi.lock
+
+%environment
+    # Ensure the container knows where the Pixi binary and environment live
+    export PIXI_HOME="/opt/pixi"
+    export PATH="$PIXI_HOME/bin:$PATH"
+    
+%post
+    apt-get update && apt-get install -y curl
+    
+    # 1. Install Pixi globally inside the container
+    curl -fsSL https://pixi.sh/install.sh | PIXI_HOME=/opt/pixi bash
+    export PATH="/opt/pixi/bin:$PATH"
+
+    # 2. Navigate to where we copied the project files
+    cd /opt/viper
+
+    # 3. Force Pixi to install the environment based strictly on the lockfile
+    pixi install --locked
+
+%runscript
+    # When you run `apptainer run viper.sif <command>`, Pixi executes it
+    cd /opt/viper
+    exec pixi run "$@"
