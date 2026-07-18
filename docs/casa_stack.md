@@ -1,6 +1,6 @@
 # CASA Environment Stack
 
-The `casa/` directory contains a modular installation of the CASA 6 suite, built on top of conda-forge and NRAO pip repositories. It replaces the old monolithic CASA wrappers by using `pixi` and `apptainer`.
+The `casa/` directory contains a modular installation of the CASA 6 suite, built on top of conda-forge and NRAO pip repositories. It replaces the old monolithic CASA wrappers by using `pixi`, `apptainer`, and `docker`.
 
 ## Environments
 
@@ -72,3 +72,30 @@ apptainer run --bind /path/to/your/host/casarundata:/casarundata casa.sif casamp
 ```
 
 **Tip:** If you need to mount the data to a different location inside the container, you can override the path using the `CASA_RUNDATA` environment variable!
+
+## Docker (Cloud/Local) Setup
+
+We also provide a `Dockerfile` that perfectly mirrors the Apptainer multi-stage logic to build standard OCI images.
+
+### Pulling from GHCR
+
+When a new release tag is pushed, the CI/CD pipeline automatically pushes the container to the GitHub Container Registry (GHCR). You can easily pull the latest image:
+
+```bash
+docker pull ghcr.io/r-xue/stack-man/casa:latest
+```
+
+### Building Locally
+
+You can manually build the Docker container using standard Docker commands:
+
+```bash
+cd casa/
+docker build -t casa-env .
+```
+
+You can optionally specify a `PIXI_ENV` build argument to build a variant:
+
+```bash
+docker build --build-arg PIXI_ENV=casa674-py312-pipeline -t casa-pipeline .
+```

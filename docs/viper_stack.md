@@ -30,3 +30,24 @@ Similar to the CASA stack, you can securely containerize this environment using 
 ```
 
 This will produce a `viper.sif` Apptainer image that encapsulates the environment statelessly.
+
+## Docker (Cloud/Local) Setup
+
+Alongside Apptainer, a `Dockerfile` is provided for standard OCI containerization. 
+
+### Pulling from GHCR
+
+The GitHub Actions CI/CD pipeline automatically pushes the Viper environment to the GitHub Container Registry on tagged releases:
+
+```bash
+docker pull ghcr.io/r-xue/stack-man/viper:latest
+```
+
+### Building Locally
+
+You can manually build the Viper Docker container from the directory:
+
+```bash
+cd viper/
+docker build -t viper-env .
+```
