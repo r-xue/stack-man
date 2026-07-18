@@ -9,6 +9,9 @@ WORKDIR /opt/casa
 # Copy manifests
 COPY pixi.toml pixi.lock ./
 
+# Install git (required for fetching git dependencies like the pipeline)
+RUN apt-get update && apt-get install -y git
+
 # Install the requested environment
 RUN pixi install --locked --environment ${PIXI_ENV}
 

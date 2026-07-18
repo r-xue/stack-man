@@ -6,8 +6,8 @@ FROM ghcr.io/prefix-dev/pixi:latest AS build
 ARG PIXI_ENV=default
 WORKDIR /opt/viper
 
-# Install build-essential for compiling C++ wheels from source (like astroviper)
-RUN apt-get update && apt-get install -y build-essential
+# Install git for any potential git dependencies
+RUN apt-get update && apt-get install -y git
 
 # Copy manifests
 COPY pixi.toml pixi.lock ./
