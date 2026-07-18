@@ -1,0 +1,97 @@
+Bootstrap: docker
+From: ubuntu:24.04
+Stage: build
+
+%arguments
+    PIXI_ENV=default
+
+%files
+    # Copy your local Pixi files into the container build context
+    pixi.toml /opt/casa/pixi.toml
+    pixi.lock /opt/casa/pixi.lock
+
+%post
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get update && apt-get install -y curl ca-certificates
+    
+    # Install Pixi globally inside the build container
+    curl -fsSL https://pixi.sh/install.sh | bash
+    export PATH="/root/.pixi/bin:$PATH"
+
+    # Install the requested environment
+    cd /opt/casa
+    pixi install --locked --environment {{ PIXI_ENV }}
+
+
+# ==============================================================================
+# FINAL STAGE
+# ==============================================================================
+Bootstrap: docker
+From: ubuntu:24.04
+Stage: final
+
+%arguments
+    PIXI_ENV=default
+
+%files from build
+    # Only copy the strictly necessary built files! This drops all cache bloat automatically.
+    /opt/casa/.pixi/envs/{{ PIXI_ENV }} /opt/casa/.pixi/envs/{{ PIXI_ENV }}
+    /opt/casa/pixi.toml /opt/casa/pixi.toml
+    /root/.pixi/bin/pixi /usr/local/bin/pixi
+
+%environment
+    # Ensure the container knows where Pixi and the specified environment are
+    export PATH="/opt/casa/.pixi/envs/{{ PIXI_ENV }}/bin:/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin"
+    export HOME="/root"
+    export PIXI_PROJECT_DIR="/opt/casa"
+    export PYTHONPATH="/opt/casa/.pixi/envs/{{ PIXI_ENV }}/lib/python3.12/site-packages:$PYTHONPATH"
+    
+    # Redirect all package caches to /tmp since the container image is read-only
+    export PIXI_CACHE_DIR="/tmp/.pixi_cache"
+    export RATTLER_CACHE_DIR="/tmp/.rattler_cache"
+    export UV_CACHE_DIR="/tmp/.uv_cache"
+    
+    # Redirect standard Linux app caches (Fontconfig, Matplotlib, etc) to /tmp
+    export XDG_CACHE_HOME="/tmp/.cache"
+    export XDG_CONFIG_HOME="/tmp/.config"
+    export XDG_DATA_HOME="/tmp/.local/share"
+    export XDG_STATE_HOME="/tmp/.local/state"
+    export MPLCONFIGDIR="/tmp/.matplotlib"
+    
+%post
+    export DEBIAN_FRONTEND=noninteractive
+    
+    # 1. Install Runtime OS Dependencies & Clean Up
+    # We only install the bare minimum packages needed to run CASA GUI tools and X11
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
+        ca-certificates xvfb libfuse2 fuse libxcb-cursor0 libglib2.0-0t64 libfontconfig1 libfreetype6 \
+        libsm6 libxext6 libxml2-utils libxrender1 imagemagick poppler-utils && \
+    apt-get autoremove -y && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+    
+    # 2. Configure CASA to expect rundata at /casarundata (which will be bind-mounted from host)
+    mkdir -p /root/.casa
+    mkdir -p /casarundata
+    chmod 777 /casarundata
+    cat > /root/.casa/config.py << 'PYEOF'
+import os
+# Allow overriding via CASA_RUNDATA env var, default to /casarundata mount point
+rundata_path = os.environ.get("CASA_RUNDATA", "/casarundata")
+measurespath = rundata_path
+datapath = [rundata_path]
+# Disable auto-update inside container so it doesn't fail on read-only mounts
+measures_auto_update = False
+data_auto_update = False
+# Redirect state and logs to the writable /tmp directory
+cachedir = '/tmp/.casa'
+logfile = '/tmp/casa.log'
+iplogfile = '/tmp/ipython.log'
+PYEOF
+
+%runscript
+    # Keep `pixi run` so custom tasks (like `casa` and `casampi`) still work correctly!
+    # --as-is ensures Pixi uses the environment as it exists and doesn't try to resolve or install anything.
+    cd /opt/casa
+    exec pixi run --as-is -e {{ PIXI_ENV }} "$@"

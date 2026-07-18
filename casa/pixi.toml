@@ -1,0 +1,80 @@
+[workspace]
+name = "casa"
+version = "0.1.0"
+description = "Casa environment stack with multi-version variants"
+authors = ["Author"]
+channels = ["conda-forge"]
+platforms = ["linux-64", { platform = "osx-arm64", macos = "15.0" }]
+
+[activation.env]
+# Suppress noisy Python 3.12 escape sequence/literal warnings from CASA packages
+PYTHONWARNINGS = "ignore::SyntaxWarning"
+
+[dependencies]
+ipython = "*"
+conda-ecosystem-user-package-isolation = "*"
+pip = ">=23.0"
+openmpi-mpicxx = ">=5.0"
+mpi4py = ">=3.1.5"
+certifi = "*"
+poppler = "*"
+imagemagick = "*"
+
+[pypi-dependencies]
+protobuf = "==3.20.*"
+grpcio = ">=1.62"
+six = ">=1.17"
+casampi = { version = ">=0.5.5", index = "https://casa-pip.nrao.edu/repository/pypi-group/simple" }
+casaplotms = { version = ">=2.5.3", index = "https://casa-pip.nrao.edu/repository/pypi-group/simple" }
+casaplotserver = { version = ">=1.8.2", index = "https://casa-pip.nrao.edu/repository/pypi-group/simple" }
+
+# --------------------------------------------------------------------------
+# Feature: CASA ver6.7.4 (Pipeline Branch) — Python 3.12
+# --------------------------------------------------------------------------
+[feature.casa674-py312.dependencies]
+python = "3.12.*"
+
+[feature.casa674-py312.pypi-dependencies]
+casashell = { version = "==6.7.4.*", index = "https://casa-pip.nrao.edu/repository/pypi-group/simple" }
+casatools = { version = "==6.7.4.*", index = "https://casa-pip.nrao.edu/repository/pypi-group/simple" }
+casatasks = { version = "==6.7.4.*", index = "https://casa-pip.nrao.edu/repository/pypi-group/simple" }
+
+# --------------------------------------------------------------------------
+# Feature: CASA ver6.7.5 (Release Branch) — Python 3.12
+# --------------------------------------------------------------------------
+[feature.casa675-py312.dependencies]
+python = "3.12.*"
+
+[feature.casa675-py312.pypi-dependencies]
+casashell = { version = "==6.7.5.*", index = "https://casa-pip.nrao.edu/repository/pypi-group/simple" }
+casatools = { version = "==6.7.5.*", index = "https://casa-pip.nrao.edu/repository/pypi-group/simple" }
+casatasks = { version = "==6.7.5.*", index = "https://casa-pip.nrao.edu/repository/pypi-group/simple" }
+
+# --------------------------------------------------------------------------
+# Feature: CASA ver6.7.6 (Main Branch) — Python 3.12
+# --------------------------------------------------------------------------
+[feature.casa676-py312.dependencies]
+python = "3.12.*"
+
+[feature.casa676-py312.pypi-dependencies]
+casashell = { version = "==6.7.6.*", index = "https://casa-pip.nrao.edu/repository/pypi-group/simple" }
+casatools = { version = "==6.7.6.*", index = "https://casa-pip.nrao.edu/repository/pypi-group/simple" }
+casatasks = { version = "==6.7.6.*", index = "https://casa-pip.nrao.edu/repository/pypi-group/simple" }
+
+# --------------------------------------------------------------------------
+# Feature: Pipeline Baseline Dependencies
+# --------------------------------------------------------------------------
+[feature.pipeline.pypi-dependencies]
+pipeline = { git = "https://open-bitbucket.nrao.edu/scm/pipe/pipeline.git" }
+
+[environments]
+default = { features = ["casa675-py312"], solve-group = "casa675-py312" }
+casa674-py312 = { features = ["casa674-py312"] }
+casa674-py312-pipeline = { features = ["casa674-py312", "pipeline"], solve-group = "casa674-py312" }
+casa675-py312 = { features = ["casa675-py312"], solve-group = "casa675-py312" }
+casa676-py312 = { features = ["casa676-py312"] }
+
+[tasks]
+fetch-casarundata = "python -c 'import casatools'"
+casa = "python -m casashell"
+casampi = "mpiexec -n 4 python -m casashell --nogui --log2term"

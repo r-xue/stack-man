@@ -1,0 +1,23 @@
+# Pixi environments
+.pixi/
+
+# Apptainer / Singularity images
+*.sif
+*.simg
+
+# IDE / OS files
+.DS_Store
+.vscode/
+
+# Notes
+notes/
+
+# Logs
+casa-*.log
+
+# Docs build output
+site/
+public/
+
+# Cache directories
+.cache/
