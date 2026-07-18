@@ -98,7 +98,7 @@ jobs:
           tags: |
             type=ref,event=branch
             type=ref,event=pr
-            type=semver,pattern={{version}}
+            type=ref,event=tag
 
       - name: Build and push CASA Docker Image
         uses: docker/build-push-action@v5
@@ -120,7 +120,7 @@ jobs:
           tags: |
             type=ref,event=branch
             type=ref,event=pr
-            type=semver,pattern={{version}}
+            type=ref,event=tag
 
       - name: Build and push Viper Docker Image
         uses: docker/build-push-action@v5
