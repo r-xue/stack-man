@@ -21,3 +21,7 @@ public/
 
 # Cache directories
 .cache/
+
+# Large datasets and archives
+casarundata*
+*.tar.gz

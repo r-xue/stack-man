@@ -75,6 +75,32 @@ casa675-py312 = { features = ["casa675-py312"], solve-group = "casa675-py312" }
 casa676-py312 = { features = ["casa676-py312"] }
 
 [tasks]
-fetch-casarundata = "python -c 'import casatools'"
+# Data Management
+# https://casadocs.readthedocs.io/en/latest/api/casaconfig.html#casaconfig.casaconfig
+update-data = "python -m casaconfig --update-all && python -m casaconfig --summary && python -m casaconfig --current-data"
+
+# Core Executables
 casa = "python -m casashell"
-casampi = "mpiexec -n 4 python -m casashell --nogui --log2term"
+
+# Pipeline Shortcut
+run-pipeline = "python -m casashell --nogui --nologger --log2term -c"
+
+[tasks.casampi]
+description = "Launch CASA MPI (mimics mpicasa safety flags). Override ranks with CASA_MPI_NPROCS."
+cmd = """\
+sh -c 'mpirun -display-allocation -display-map -oversubscribe \
+--mca btl ^openib --mca btl_vader_single_copy_mechanism none --bind-to none \
+-x FI_PROVIDER -x OMP_NUM_THREADS -x OPENBLAS_NUM_THREADS \
+-x PATH -x PYTHONNOUSERSITE \
+-n ${CASA_MPI_NPROCS:-4} \
+python -m casashell "$@"' _\
+"""
+
+[tasks.casampi.env]
+FI_PROVIDER = "^psm3"
+PMIX_MCA_pcompress_base_silence_warning = "1"
+OMP_PLACES = "threads"
+OMP_PROC_BIND = "false"
+OMP_NUM_THREADS = "1"
+OPENBLAS_NUM_THREADS = "1"
+PYTHONNOUSERSITE = "1"

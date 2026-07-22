@@ -42,7 +42,7 @@ Stage: final
 %environment
     # Ensure the container knows where Pixi and the specified environment are
     export PATH="/opt/casa/.pixi/envs/{{ PIXI_ENV }}/bin:/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin"
-    export HOME="/root"
+    # DO NOT EXPORT HOME="/root" HERE! Allow HTCondor and local user mounts to dictate HOME.
     export PIXI_PROJECT_DIR="/opt/casa"
     export PYTHONPATH="/opt/casa/.pixi/envs/{{ PIXI_ENV }}/lib/python3.12/site-packages:$PYTHONPATH"
     
@@ -71,11 +71,11 @@ Stage: final
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
     
-    # 2. Configure CASA to expect rundata at /casarundata (which will be bind-mounted from host)
-    mkdir -p /root/.casa
+    # 2. Configure CASA default config template in a global readable location
+    mkdir -p /etc/casa
     mkdir -p /casarundata
     chmod 777 /casarundata
-    cat > /root/.casa/config.py << 'PYEOF'
+    cat > /etc/casa/config.py << 'PYEOF'
 import os
 # Allow overriding via CASA_RUNDATA env var, default to /casarundata mount point
 rundata_path = os.environ.get("CASA_RUNDATA", "/casarundata")
@@ -91,7 +91,17 @@ iplogfile = '/tmp/ipython.log'
 PYEOF
 
 %runscript
-    # Keep `pixi run` so custom tasks (like `casa` and `casampi`) still work correctly!
+    # 1. Ensure the user's true HOME has the .casa directory and config
+    # On HTCondor, $HOME will be the writable scratch directory. Locally, it's the user's real home.
+    if [ -n "$HOME" ]; then
+        mkdir -p "$HOME/.casa"
+        # Only copy if the user hasn't mounted or created their own config
+        if [ ! -f "$HOME/.casa/config.py" ]; then
+            cp /etc/casa/config.py "$HOME/.casa/config.py"
+        fi
+    fi
+
+    # 2. Keep `pixi run` so custom tasks (like `casa` and `casampi`) still work correctly!
+    # --manifest-path tells pixi where the project is without changing the user's current directory.
     # --as-is ensures Pixi uses the environment as it exists and doesn't try to resolve or install anything.
-    cd /opt/casa
-    exec pixi run --as-is -e {{ PIXI_ENV }} "$@"
+    exec pixi run --manifest-path /opt/casa/pixi.toml --as-is -e {{ PIXI_ENV }} "$@"
