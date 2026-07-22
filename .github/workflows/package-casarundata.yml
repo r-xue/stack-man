@@ -1,0 +1,75 @@
+name: Package casarundata
+
+on:
+  pull_request:
+  
+  # Allow manual triggers from the GitHub Actions UI (for on-demand updates)
+  workflow_dispatch:
+
+  # Run automatically on a schedule (e.g., every Monday and Thursday at midnight UTC)
+  schedule:
+    - cron: "0 0 * * 1,4"
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install casaconfig
+        run: |
+          # We just need the casaconfig package to download the data
+          pip install casaconfig
+
+      - name: Generate Timestamp
+        id: timestamp
+        run: |
+          echo "date=$(date +%Y%m%d)-${{ github.run_number }}" >> $GITHUB_OUTPUT
+
+      - name: Cache casarundata
+        uses: actions/cache@v4
+        with:
+          path: casarundata
+          key: casarundata-${{ steps.timestamp.outputs.date }}
+          restore-keys: |
+            casarundata-
+
+      - name: Download latest CASA data
+        run: |
+          mkdir -p casarundata
+          # Point casaconfig to download the data into our local directory
+          # If the cache hit, this will only download the small delta updates!
+          python -m casaconfig --measurespath ./casarundata --update-all
+
+      - name: Tar and Compress Data
+        run: |
+          tar -czvf casarundata-${{ steps.timestamp.outputs.date }}.tar.gz casarundata/
+
+      - name: Create GitHub Release (Skip on PR)
+        if: github.event_name != 'pull_request'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Create a release named "casarundata-YYYYMMDD"
+          gh release create "rundata-${{ steps.timestamp.outputs.date }}" \
+            casarundata-${{ steps.timestamp.outputs.date }}.tar.gz \
+            --title "CASA Rundata ${{ steps.timestamp.outputs.date }}" \
+            --notes "Automated build of the latest CASA IERS tables and ephemerides."
+
+      - name: Upload Artifact (PR Only)
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: casarundata-test-artifact
+          path: casarundata-${{ steps.timestamp.outputs.date }}.tar.gz
+          retention-days: 1
