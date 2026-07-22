@@ -1,6 +1,8 @@
 name: Package casarundata
 
 on:
+  pull_request:
+  
   # Allow manual triggers from the GitHub Actions UI (for on-demand updates)
   workflow_dispatch:
 
@@ -53,7 +55,8 @@ jobs:
         run: |
           tar -czvf casarundata-${{ steps.timestamp.outputs.date }}.tar.gz casarundata/
 
-      - name: Create GitHub Release and Upload Artifact
+      - name: Create GitHub Release (Skip on PR)
+        if: github.event_name != 'pull_request'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -62,3 +65,11 @@ jobs:
             casarundata-${{ steps.timestamp.outputs.date }}.tar.gz \
             --title "CASA Rundata ${{ steps.timestamp.outputs.date }}" \
             --notes "Automated build of the latest CASA IERS tables and ephemerides."
+
+      - name: Upload Artifact (PR Only)
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: casarundata-test-artifact
+          path: casarundata-${{ steps.timestamp.outputs.date }}.tar.gz
+          retention-days: 1
