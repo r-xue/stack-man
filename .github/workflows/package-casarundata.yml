@@ -61,9 +61,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Create a release named "casarundata-YYYYMMDD"
-          gh release create "rundata-${{ steps.timestamp.outputs.date }}" \
+          gh release create "casarundata-${{ steps.timestamp.outputs.date }}" \
             casarundata-${{ steps.timestamp.outputs.date }}.tar.gz \
-            --title "CASA Rundata ${{ steps.timestamp.outputs.date }}" \
+            --title "casarundata ${{ steps.timestamp.outputs.date }}" \
             --notes "Automated build of the latest CASA IERS tables and ephemerides."
 
       - name: Upload Artifact (PR Only)

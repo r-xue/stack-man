@@ -38,7 +38,10 @@ for stack_dir in "$REPO_ROOT"/*/; do
             if [ "$env" = "default" ]; then
                 image_name="${stack_name}.sif"
             else
-                image_name="${stack_name}-${env}.sif"
+                # Clean up redundant stack names in the environment string (e.g. casa-casa674 -> casa-674)
+                short_env="${env#$stack_name}"
+                short_env="${short_env#-}" # strip leading hyphen if any
+                image_name="${stack_name}-${short_env}.sif"
             fi
             
             echo "-> Building environment: $env (Output: $image_name)"

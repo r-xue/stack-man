@@ -15,3 +15,11 @@ Welcome to the `stack-man` repository! This project provides reproducible, conta
 
 * [CASA Environment Stack](casa_stack.md)
 * [Viper Environment Stack](viper_stack.md)
+
+## Automation
+
+* [CI/CD Workflows](automation/ci_cd.md)
+
+## Guides
+
+* [Running on Apple Silicon](apple_silicon_containers.md)
