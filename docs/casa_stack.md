@@ -4,7 +4,7 @@ The `casa/` directory contains a modular installation of the CASA 6 suite, built
 
 ## Environments
 
-The `pixi.toml` provides several variants (e.g., `casa674-py312`, `casa675-py312`).
+The `pixi.toml` provides several variants (e.g., `casa674-py312`, `casa676-py312`, `casa677-py312`).
 There is also a specialized pipeline environment (`casa674-py312-pipeline`) that directly pulls the ALMA/VLA pipeline source from the Bitbucket repository.
 
 ## Local Setup & Usage
@@ -33,13 +33,13 @@ Run CASA across MPI processes (default 4):
 pixi run casampi
 
 # Dynamic allocation (e.g., 8 processes)
-CASA_MPI_NPROCS=8 pixi run casampi
+CASA_NPROCS=8 pixi run casampi
 ```
 
 **Tip (Silencing Worker Spam):** If you run `casampi` interactively, every worker will print the IPython welcome banner to your terminal. To run cleanly (especially on the grid), pass a python script via the `-c` flag or supply a `.py` file. This automatically disables the IPython initialization banners across all workers:
 
 ```bash
-CASA_MPI_NPROCS=4 pixi run casampi --nogui --nologger -c "print('MPI Execution Complete!')"
+CASA_NPROCS=4 pixi run casampi --nogui --nologger -c "print('MPI Execution Complete!')"
 ```
 
 To run a specific environment (like the pipeline):
