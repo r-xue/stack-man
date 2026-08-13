@@ -40,18 +40,7 @@ casatools = { version = "==6.7.4.*", index = "https://casa-pip.nrao.edu/reposito
 casatasks = { version = "==6.7.4.*", index = "https://casa-pip.nrao.edu/repository/pypi-group/simple" }
 
 # --------------------------------------------------------------------------
-# Feature: CASA ver6.7.5 (Release Branch) — Python 3.12
-# --------------------------------------------------------------------------
-[feature.casa675-py312.dependencies]
-python = "3.12.*"
-
-[feature.casa675-py312.pypi-dependencies]
-casashell = { version = "==6.7.5.*", index = "https://casa-pip.nrao.edu/repository/pypi-group/simple" }
-casatools = { version = "==6.7.5.*", index = "https://casa-pip.nrao.edu/repository/pypi-group/simple" }
-casatasks = { version = "==6.7.5.*", index = "https://casa-pip.nrao.edu/repository/pypi-group/simple" }
-
-# --------------------------------------------------------------------------
-# Feature: CASA ver6.7.6 (Main Branch) — Python 3.12
+# Feature: CASA ver6.7.6 (Latest Release Branch) — Python 3.12
 # --------------------------------------------------------------------------
 [feature.casa676-py312.dependencies]
 python = "3.12.*"
@@ -62,17 +51,28 @@ casatools = { version = "==6.7.6.*", index = "https://casa-pip.nrao.edu/reposito
 casatasks = { version = "==6.7.6.*", index = "https://casa-pip.nrao.edu/repository/pypi-group/simple" }
 
 # --------------------------------------------------------------------------
+# Feature: CASA ver6.7.7 (Master Branch) — Python 3.12
+# --------------------------------------------------------------------------
+[feature.casa677-py312.dependencies]
+python = "3.12.*"
+
+[feature.casa677-py312.pypi-dependencies]
+casashell = { version = "==6.7.7.*", index = "https://casa-pip.nrao.edu/repository/pypi-group/simple" }
+casatools = { version = "==6.7.7.*", index = "https://casa-pip.nrao.edu/repository/pypi-group/simple" }
+casatasks = { version = "==6.7.7.*", index = "https://casa-pip.nrao.edu/repository/pypi-group/simple" }
+
+# --------------------------------------------------------------------------
 # Feature: Pipeline Baseline Dependencies
 # --------------------------------------------------------------------------
 [feature.pipeline.pypi-dependencies]
 pipeline = { git = "https://open-bitbucket.nrao.edu/scm/pipe/pipeline.git" }
 
 [environments]
-default = { features = ["casa675-py312"], solve-group = "casa675-py312" }
+default = { features = ["casa676-py312"], solve-group = "casa676-py312" }
 casa674-py312 = { features = ["casa674-py312"] }
 casa674-py312-pipeline = { features = ["casa674-py312", "pipeline"], solve-group = "casa674-py312" }
-casa675-py312 = { features = ["casa675-py312"], solve-group = "casa675-py312" }
 casa676-py312 = { features = ["casa676-py312"] }
+casa677-py312 = { features = ["casa677-py312"] }
 
 [tasks]
 # Data Management
@@ -86,13 +86,13 @@ casa = "python -m casashell"
 run-pipeline = "python -m casashell --nogui --nologger --log2term -c"
 
 [tasks.casampi]
-description = "Launch CASA MPI (mimics mpicasa safety flags). Override ranks with CASA_MPI_NPROCS."
+description = "Launch CASA MPI (mimics mpicasa safety flags). Override ranks with CASA_NPROCS."
 cmd = """\
 sh -c 'mpirun -display-allocation -display-map -oversubscribe \
 --mca btl ^openib --mca btl_vader_single_copy_mechanism none --bind-to none \
 -x FI_PROVIDER -x OMP_NUM_THREADS -x OPENBLAS_NUM_THREADS \
 -x PATH -x PYTHONNOUSERSITE \
--n ${CASA_MPI_NPROCS:-4} \
+-n ${CASA_NPROCS:-4} \
 python -m casashell "$@"' _\
 """
 
