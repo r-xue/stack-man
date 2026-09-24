@@ -62,6 +62,39 @@ casatools = { version = "==6.7.7.*", index = "https://casa-pip.nrao.edu/reposito
 casatasks = { version = "==6.7.7.*", index = "https://casa-pip.nrao.edu/repository/pypi-group/simple" }
 
 # --------------------------------------------------------------------------
+# Feature: CASA 6 Dev (magclouds.org Index / Master Branch) — Python 3.12
+# --------------------------------------------------------------------------
+[feature.casa6dev-py312.dependencies]
+python = "3.12.*"
+
+[feature.casa6dev-py312.pypi-dependencies]
+casatools = { version = ">=6.7.7", index = "https://www.magclouds.org/casa6-dev/simple" }
+casatasks = { version = ">=6.7.7", index = "https://www.magclouds.org/casa6-dev/simple" }
+casashell = { version = ">=6.7.6", index = "https://casa-pip.nrao.edu/repository/pypi-group/simple" }
+
+# --------------------------------------------------------------------------
+# Feature: CASA 6 Local Build (Relative Wheel Path / Master Branch) — Python 3.12
+# --------------------------------------------------------------------------
+[feature.casa6local-py312]
+platforms = ["linux-64"]
+
+[feature.casa6local-py312.dependencies]
+python = "3.12.*"
+numpy = ">=1.26"
+wcslib = ">=7.7"
+cfitsio = ">=4.0"
+fftw = ">=3.3"
+gsl = ">=2.6"
+hdf5 = ">=1.12"
+openblas = "*"
+xerces-c = "*"
+
+[feature.casa6local-py312.pypi-dependencies]
+casatools = { path = "casa6-dev/src/casa6/casatools/dist/casatools-6.7.7.7-cp312-cp312-linux_x86_64.whl" }
+casatasks = { path = "casa6-dev/src/casa6/casatasks/dist/casatasks-6.7.7.7-py3-none-any.whl" }
+casashell = { version = ">=6.7.6", index = "https://casa-pip.nrao.edu/repository/pypi-group/simple" }
+
+# --------------------------------------------------------------------------
 # Feature: Pipeline Baseline Dependencies
 # --------------------------------------------------------------------------
 [feature.pipeline.pypi-dependencies]
@@ -73,6 +106,8 @@ casa674-py312 = { features = ["casa674-py312"] }
 casa674-py312-pipeline = { features = ["casa674-py312", "pipeline"], solve-group = "casa674-py312" }
 casa676-py312 = { features = ["casa676-py312"] }
 casa677-py312 = { features = ["casa677-py312"] }
+casa6dev-py312 = { features = ["casa6dev-py312"] }
+casa6local-py312 = { features = ["casa6local-py312"] }
 
 [tasks]
 # Data Management
@@ -80,15 +115,27 @@ casa677-py312 = { features = ["casa677-py312"] }
 update-data = "python -m casaconfig --update-all && python -m casaconfig --summary && python -m casaconfig --current-data"
 
 # Core Executables
-casa = "python -m casashell"
+[tasks.casa]
+cmd = "sh -c 'export OMP_NUM_THREADS=\"${OMP_NUM_THREADS:-4}\" OPENBLAS_NUM_THREADS=\"${OPENBLAS_NUM_THREADS:-4}\"; cd \"${INIT_CWD:-.}\" && exec python -m casashell \"$@\"' _"
+
+[tasks.casa.env]
+OMP_PLACES = "threads"
+OMP_PROC_BIND = "false"
+PYTHONNOUSERSITE = "1"
 
 # Pipeline Shortcut
-run-pipeline = "python -m casashell --nogui --nologger --log2term -c"
+[tasks.run-pipeline]
+cmd = "sh -c 'export OMP_NUM_THREADS=\"${OMP_NUM_THREADS:-4}\" OPENBLAS_NUM_THREADS=\"${OPENBLAS_NUM_THREADS:-4}\"; cd \"${INIT_CWD:-.}\" && exec python -m casashell --nogui --nologger --log2term -c \"$@\"' _"
+
+[tasks.run-pipeline.env]
+OMP_PLACES = "threads"
+OMP_PROC_BIND = "false"
+PYTHONNOUSERSITE = "1"
 
 [tasks.casampi]
 description = "Launch CASA MPI (mimics mpicasa safety flags). Override ranks with CASA_NPROCS."
 cmd = """\
-sh -c 'mpirun -display-allocation -display-map -oversubscribe \
+sh -c 'cd "${INIT_CWD:-.}" && mpirun -wdir "${INIT_CWD:-.}" -display-allocation -display-map -oversubscribe \
 --mca btl ^openib --mca btl_vader_single_copy_mechanism none --bind-to none \
 -x FI_PROVIDER -x OMP_NUM_THREADS -x OPENBLAS_NUM_THREADS \
 -x PATH -x PYTHONNOUSERSITE \

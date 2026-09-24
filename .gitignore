@@ -25,3 +25,7 @@ public/
 # Large datasets and archives
 casarundata*
 *.tar.gz
+
+# Local developer symlinks
+casa6-dev
+casa/casa6-dev
